@@ -16,42 +16,45 @@ user_languages = {}
 # Словарь с переводами для погоды
 translations = {
     "ru": {
+        "welcome": "Добро пожаловать! Я помогу узнать погоду в вашем городе. \n\nВыберите один из вариантов:",
         "weather": "🌦 Погода в городе {city}:",
         "temperature": "🌡 Температура: {temp}",
         "feels_like": "🌬 Ощущается как: {feels_like}",
         "humidity": "💧 Влажность: {humidity}%",
         "wind_speed": "🌪 Скорость ветра: {wind} м/с",
         "weather_condition": "🌤 {weather}",
-        "unit_changed": "Единица измерения температуры установлена на {unit}. Теперь выберите город.",
-        "language_changed": "Язык изменен на {language}. Теперь выберите город.",
+        "unit_changed": "Единица измерения температуры установлена на {unit}. \n\nТеперь выберите город.",
+        "language_changed": "Язык изменен на {language}. \n\nТеперь выберите город.",
         "choose_city": "Выберите город:",
         "choose_unit": "Выберите единицу измерения температуры:",
         "choose_language": "Выберите язык:",
         "city_not_found": "🚫 Город не найден!"
     },
     "en": {
+        "welcome": "Welcome! I can help you with weather information. \n\nChoose an option below:",
         "weather": "🌦 Weather in {city}:",
         "temperature": "🌡 Temperature: {temp}",
         "feels_like": "🌬 Feels like: {feels_like}",
         "humidity": "💧 Humidity: {humidity}%",
         "wind_speed": "🌪 Wind speed: {wind} m/s",
         "weather_condition": "🌤 {weather}",
-        "unit_changed": "Temperature unit set to {unit}. Now choose a city.",
-        "language_changed": "Language changed to {language}. Now choose a city.",
+        "unit_changed": "Temperature unit set to {unit}. \n\nNow choose a city.",
+        "language_changed": "Language changed to {language}. \n\nNow choose a city.",
         "choose_city": "Choose a city:",
         "choose_unit": "Choose a temperature unit:",
         "choose_language": "Choose a language:",
         "city_not_found": "🚫 City not found!"
     },
     "kk": {
+        "welcome": "Қош келдіңіз! Мен сіздің қалаңыздың ауа райы туралы мәліметтер беру үшін көмектесемін. \n\nТөменде біреуін таңдаңыз:",
         "weather": "🌦 Қаладағы ауа райы {city}:",
         "temperature": "🌡 Температура: {temp}",
         "feels_like": "🌬 Қалай сезіледі: {feels_like}",
         "humidity": "💧 Ылғалдылық: {humidity}%",
         "wind_speed": "🌪 Желдің жылдамдығы: {wind} м/с",
         "weather_condition": "🌤 {weather}",
-        "unit_changed": "Температураның өлшем бірлігі {unit} етіп өзгертілді. Енді қаланы таңдаңыз.",
-        "language_changed": "Тіл {language} деп өзгертілді. Енді қаланы таңдаңыз.",
+        "unit_changed": "Температураның өлшем бірлігі {unit} етіп өзгертілді. \n\nЕнді қаланы таңдаңыз.",
+        "language_changed": "Тіл {language} деп өзгертілді. \n\nЕнді қаланы таңдаңыз.",
         "choose_city": "Қаланы таңдаңыз:",
         "choose_unit": "Температураның өлшем бірлігін таңдаңыз:",
         "choose_language": "Тілді таңдаңыз:",
@@ -75,6 +78,8 @@ weather_translations = {
 @bot.message_handler(commands=['start'])
 def main(message):
     user_lang = user_languages.get(message.chat.id, 'ru')  # По умолчанию русский
+    # Приветственное сообщение
+    bot.send_message(message.chat.id, translations[user_lang]["welcome"])
     # Кнопки для выбора города
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
     button1 = types.KeyboardButton('Астана')
@@ -162,13 +167,14 @@ def get_weather(message):
             temp_str = f'{temp} K'
             feels_like_str = f'{feels_like} K'
 
-        # Выводим улучшенное сообщение с одним эмодзи
-        bot.send_message(message.chat.id, f"{translations[user_lang]['weather'].format(city=city)}\n" +
-                         f"🌡 {translations[user_lang]['temperature'].format(temp=temp_str)}\n" +
-                         f"🌬 {translations[user_lang]['feels_like'].format(feels_like=feels_like_str)}\n" +
-                         f"💧 {translations[user_lang]['humidity'].format(humidity=humidity)}\n" +
-                         f"🌪 {translations[user_lang]['wind_speed'].format(wind=wind)}\n" +
-                         f"🌤 {translations[user_lang]['weather_condition'].format(weather=weather)}")
+        # Формируем сообщение с добавленными \n между предложениями
+        response_message = f"{translations[user_lang]['weather'].format(city=city)}\n" + \
+                           f"🌡 {translations[user_lang]['temperature'].format(temp=temp_str)}\n" + \
+                           f"🌬 {translations[user_lang]['feels_like'].format(feels_like=feels_like_str)}\n" + \
+                           f"💧 {translations[user_lang]['humidity'].format(humidity=humidity)}\n" + \
+                           f"🌪 {translations[user_lang]['wind_speed'].format(wind=wind)}\n" + \
+                           f"🌤 {translations[user_lang]['weather_condition'].format(weather=weather)}"
+        bot.send_message(message.chat.id, response_message)
     else:
         bot.send_message(message.chat.id, translations[user_lang]["city_not_found"])
 
