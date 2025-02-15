@@ -39,6 +39,9 @@ BOT_TOKEN=your_telegram_bot_token
 Commands
 
 /start: Start the bot and select a city.
+
 /unit: Change temperature unit (°C, °F, K).
+
 /language: Change language (Russian, English, Kazakh).
+
 /daily: Set daily weather notifications. 
