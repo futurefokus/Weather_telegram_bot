@@ -45,3 +45,12 @@ Commands
 /language: Change language (Russian, English, Kazakh).
 
 /daily: Set daily weather notifications. 
+
+Example:
+
+🌦 Weather in Astana:    
+🌡 🌡 Temperature: -6.03°C    
+🌬 🌬 Feels like: -13.03°C    
+💧 💧 Humidity: 79%    
+🌪 🌪 Wind speed: 7 m/s      
+🌤 🌤 scattered clouds    
