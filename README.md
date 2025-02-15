@@ -33,4 +33,4 @@ Daily Subscription:
 Daily weather summary set for Astana at 07:30.
 Troubleshooting
 City not found: "City not found!" will appear if the city is invalid.
-Invalid time format: Make sure to enter the time in HH:MM (24-hour) format for daily weather setup.
+Invalid time format: Make sure to enter the time in HH:MM (24-hour) format for daily weathe
