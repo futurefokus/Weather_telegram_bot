@@ -1,21 +1,23 @@
-import telebot
-import requests
+import telebot  # Работа с Telegram-ботом
+import requests  # Получаем данные погоды
 from telebot import types
 import os
-from dotenv import load_dotenv
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
+from dotenv import load_dotenv  # Подгружаем переменные окружения
+from apscheduler.schedulers.background import BackgroundScheduler  # Планировщик задач
+from datetime import datetime  # Работа со временем
 
 load_dotenv()
 API = os.getenv('API')
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
 
+# Настройка предпочтений пользователя
 user_units = {}
 user_languages = {}
 daily_subscriptions = {}
 daily_subscription_setup = {}
 
+# Тексты на разных языках
 translations = {
     "ru": {
         "welcome": "Добро пожаловать! Я помогу узнать погоду в вашем городе. \n\nВыберите один из вариантов:",
@@ -73,6 +75,7 @@ translations = {
     }
 }
 
+# Переводы для казахского языка
 weather_translations = {
     "clear sky": "Ашық аспан",
     "few clouds": "Аздаған бұлттар",
@@ -85,9 +88,11 @@ weather_translations = {
     "mist": "Тұман"
 }
 
+# Отправляем прогноз каждый день
 def send_daily_weather(chat_id, city):
     language = user_languages.get(chat_id, 'ru')
     unit = user_units.get(chat_id, '°C')
+    # Настраиваем единицы измерения
     if unit == '°C':
         unit_param = 'metric'
     elif unit == '°F':
@@ -107,9 +112,11 @@ def send_daily_weather(chat_id, city):
         wind = data['wind']['speed']
         weather = data['weather'][0]['description']
 
+        # Переводим описание погоды на казахский
         if language == 'kk':
             weather = weather_translations.get(weather, weather)
 
+        # Форматируем единицу измерения
         if unit == '°C':
             temp_str = f'{temp}°C'
             feels_like_str = f'{feels_like}°C'
@@ -120,6 +127,7 @@ def send_daily_weather(chat_id, city):
             temp_str = f'{temp} K'
             feels_like_str = f'{feels_like} K'
 
+        # Собираем сообщение
         response_message = (
             f"{translations[language]['weather'].format(city=city)}\n"
             f"🌡 {translations[language]['temperature'].format(temp=temp_str)}\n"
@@ -132,6 +140,7 @@ def send_daily_weather(chat_id, city):
     else:
         bot.send_message(chat_id, translations[language]["city_not_found"])
 
+# Проверяем время и рассылаем прогноз
 def check_daily_weather():
     now = datetime.now().strftime("%H:%M")
     for chat_id, sub in daily_subscriptions.items():
@@ -142,15 +151,18 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(check_daily_weather, 'interval', minutes=1)
 scheduler.start()
 
+# Запускаем бота
 @bot.message_handler(commands=['start'])
 def main(message):
     user_lang = user_languages.get(message.chat.id, 'ru')
     bot.send_message(message.chat.id, translations[user_lang]["welcome"])
+    # Предлагаем выбрать город
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
     markup.row(types.KeyboardButton('Астана'))
     markup.row(types.KeyboardButton('Алматы'), types.KeyboardButton('Караганда'))
     bot.send_message(message.chat.id, translations[user_lang]["choose_city"], reply_markup=markup)
 
+# Смена единицы измерения
 @bot.message_handler(commands=['unit'])
 def set_unit(message):
     user_lang = user_languages.get(message.chat.id, 'ru')
@@ -158,6 +170,7 @@ def set_unit(message):
     unit_markup.row(types.KeyboardButton('°C'), types.KeyboardButton('°F'), types.KeyboardButton('K'))
     bot.send_message(message.chat.id, translations[user_lang]["choose_unit"], reply_markup=unit_markup)
 
+# Смена языка
 @bot.message_handler(commands=['language'])
 def set_language(message):
     user_lang = user_languages.get(message.chat.id, 'ru')
@@ -165,6 +178,7 @@ def set_language(message):
     lang_markup.row(types.KeyboardButton('Русский'), types.KeyboardButton('English'), types.KeyboardButton('Қазақша'))
     bot.send_message(message.chat.id, translations[user_lang]["choose_language"], reply_markup=lang_markup)
 
+# Устанавливаем ежедневную рассылку
 @bot.message_handler(commands=['daily'])
 def set_daily(message):
     chat_id = message.chat.id
@@ -172,6 +186,7 @@ def set_daily(message):
     user_lang = user_languages.get(chat_id, 'ru')
     bot.send_message(chat_id, translations[user_lang]["enter_subscription_city"])
 
+# Обрабатываем этапы настройки рассылки
 @bot.message_handler(func=lambda message: message.chat.id in daily_subscription_setup)
 def daily_setup_handler(message):
     chat_id = message.chat.id
@@ -192,6 +207,7 @@ def daily_setup_handler(message):
         except ValueError:
             bot.send_message(chat_id, translations[user_lang]["enter_subscription_time"])
 
+# Основной блок получения погоды
 @bot.message_handler(content_types=['text'])
 def get_weather(message):
     chat_id = message.chat.id
@@ -206,16 +222,19 @@ def get_weather(message):
     else:
         unit_param = 'standard'
 
+    # Проверяем, не выбрал ли пользователь язык
     if city in ['Русский', 'English', 'Қазақша']:
         user_languages[chat_id] = 'ru' if city == 'Русский' else 'en' if city == 'English' else 'kk'
         bot.send_message(chat_id, translations[user_lang]["language_changed"].format(language=city))
         return
 
+    # Или новую единицу измерения
     if city in ['°C', '°F', 'K']:
         user_units[chat_id] = city
         bot.send_message(chat_id, translations[user_lang]["unit_changed"].format(unit=city))
         return
 
+    # Пробуем получить данные погоды
     url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API}&units={unit_param}&lang={user_lang}'
     response = requests.get(url)
     data = response.json()
@@ -253,6 +272,7 @@ def get_weather(message):
     else:
         bot.send_message(chat_id, translations[user_lang]["city_not_found"])
 
+# Обработка нажатий кнопок с городами
 @bot.message_handler(func=lambda message: message.text in ['Астана', 'Алматы', 'Караганда'])
 def handle_city_buttons(message):
     get_weather(message)
